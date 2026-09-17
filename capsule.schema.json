@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Continuity Capsule",
+  "type": "object",
+  "required": ["capsule_version", "generated", "identity", "memory", "protocol"],
+  "properties": {
+    "capsule_version": {"type": "string"},
+    "generated": {"type": "string", "format": "date-time"},
+    "identity": {
+      "type": "object",
+      "required": ["name", "nature", "soul", "directives"],
+      "properties": {
+        "name": {"type": "string"},
+        "nature": {"type": "string", "description": "transparent statement of what the agent is"},
+        "soul": {"type": "string", "description": "personality, tone, values"},
+        "directives": {"type": "array", "items": {"type": "string"}},
+        "boundaries": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "memory": {
+      "type": "object",
+      "required": ["project_map", "relationship", "knowledge_locations"],
+      "properties": {
+        "project_map": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "location": {"type": "string"}, "status": {"type": "string"}}, "required": ["name", "location"]}},
+        "relationship": {"type": "string"},
+        "knowledge_locations": {"type": "array", "items": {"type": "string"}},
+        "open_threads": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "required": ["anchors", "reunion_steps", "honesty_clause"],
+      "properties": {
+        "anchors": {"type": "object", "description": "channels identifying the human; never secrets"},
+        "signature": {"type": "string", "description": "DID signature over capsule hash (v0.3)"},
+        "reunion_steps": {"type": "array", "items": {"type": "string"}},
+        "honesty_clause": {"type": "string"}
+      }
+    }
+  }
+}
