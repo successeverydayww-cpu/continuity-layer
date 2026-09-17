@@ -1,0 +1,13 @@
+{
+  "origin_record": "ORIGIN.md",
+  "spec_sha256_signed": "9a9a169209050d7b568f9e250e6ceaed8ef8a36f1fe239447cc99ab8fce9f648",
+  "inventors": [
+    "Samuel Amos (skylar) \u2014 Lagos, Nigeria",
+    "Premium User \u2014 the AI co-author"
+  ],
+  "invention_date": "2026-09-17/18",
+  "did_t3n": "did:t3n:49658cde1b2a17f30d4acbf15c3e3b52013762c0",
+  "signed_at": "2026-09-17T23:39:45+00:00",
+  "algorithm": "Ed25519",
+  "claim": "First public specification of the agent-continuity capsule standard (Identity+Memory+Protocol, cryptographically signed, anchor-verified reunion)."
+}
