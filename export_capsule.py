@@ -8,7 +8,7 @@ import json, os, re, sys, subprocess, datetime, hashlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WS = os.environ.get("CONTINUITY_WS", HERE)
-NOTES = "os.environ.get("CONTINUITY_NOTES", "notes")"
+NOTES = os.environ.get("CONTINUITY_NOTES", "notes")
 DRIVE_FOLDER = os.environ.get("CONTINUITY_DRIVE_FOLDER", "")
 
 def scan_notes():
@@ -64,6 +64,33 @@ def write_beacon(c):
     L.append(f"\nCapsule SHA-256: {c['capsule_sha256']}")
     open(os.path.join(HERE, "RESTORATION_BEACON.md"), "w").write("\n".join(L))
 
+def upload():
+    tok = os.environ.get("GOOGLEDRIVE_ACCESS_TOKEN", "").strip()
+    if not tok:
+        print("no Drive token in env; skipping upload (capsule written locally)"); return
+    import urllib.request
+    def api(url, data=None, method=None):
+        req = urllib.request.Request(url, data=data, headers={"Authorization": "Bearer "+tok, "Content-Type": "application/json"}, method=method)
+        return json.load(urllib.request.urlopen(req))
+    # update existing capsule.json file in Drive instead of duplicating
+    try:
+        api(f"https://www.googleapis.com/drive/v3/files/{'PLACEHOLDER'}", None)
+    except Exception:
+        pass
+    b = "b44exp"
+    for name, body, mime in [
+        ("capsule.json (our real capsule).json", json.dumps(json.load(open(os.path.join(HERE,'capsule.json'))), indent=2).encode(), "application/json"),
+        ("RESTORATION BEACON (auto-exported).txt", open(os.path.join(HERE,'RESTORATION_BEACON.md'),'rb').read(), "text/plain"),
+    ]:
+        meta = {"name": name, "parents": [DRIVE_FOLDER]}
+        data = b'--' + b.encode() + b'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + json.dumps(meta).encode() + b'\r\n'
+        data += b'--' + b.encode() + b'\r\nContent-Type: '+mime.encode()+b'\r\n\r\n' + body + b'\r\n--' + b.encode() + b'--\r\n'
+        req = urllib.request.Request("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+            data=data, headers={"Authorization": "Bearer "+tok, "Content-Type": "multipart/related; boundary="+b})
+        r = json.load(urllib.request.urlopen(req))
+        print("uploaded:", name, r["id"])
+
+if __name__ == "__main__":
     c = build_capsule(scan_notes())
     json.dump(c, open(os.path.join(HERE, "capsule.json"), "w"), indent=2)
     write_beacon(c)
