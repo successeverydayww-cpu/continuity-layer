@@ -1,4 +1,4 @@
-const CACHE = 'continuity-app-v2';
+const CACHE = 'continuity-app-v3';
 const ASSETS = [
   '/continuity-layer/app.html',
   '/continuity-layer/manifest-app.json',
@@ -17,11 +17,12 @@ self.addEventListener('fetch', e => {
   if (url.origin !== location.origin) return; // never cache API calls
   if (e.request.method !== 'GET') return;
   if (url.pathname.includes('/functions/')) return;
+  // NETWORK-FIRST: every visit fetches the live version; cache only backs up offline
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(r => {
+    fetch(e.request).then(r => {
       const cp = r.clone();
       caches.open(CACHE).then(c => c.put(e.request, cp));
       return r;
-    }).catch(() => caches.match('/continuity-layer/app.html')))
+    }).catch(() => caches.match(e.request).then(hit => hit || caches.match('/continuity-layer/app.html')))
   );
 });

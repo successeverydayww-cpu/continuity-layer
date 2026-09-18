@@ -223,8 +223,13 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 async function api(body){
-  const r = await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  return r.json();
+  try{
+    const r = await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok) return {err:(d.detail||d.message||d.error_type||('Request failed ('+r.status+')'))};
+    if(d.error_type||d.error) return {err:(d.detail||d.message||d.error_type||'Request failed')};
+    return d;
+  }catch(e){ return {err:'No connection — check your internet and try again'} }
 }
 // ---- gate ----
 async function sendOtp(){
@@ -242,6 +247,7 @@ async function verify(){
   if(d.err){toast(d.err);return}
   EMAIL=e;TIER=d.tier||'Free';
   localStorage.setItem('cont_email',EMAIL);
+  try{localStorage.setItem('cont_tier',TIER)}catch(_){}
   enterApp();
 }
 function enterApp(){
@@ -249,7 +255,11 @@ function enterApp(){
   $('hdrMail').textContent=EMAIL;$('setMail').textContent=EMAIL;$('setTier').textContent=TIER;
   loadSaved();
 }
-function logout(){localStorage.removeItem('cont_email');location.reload()}
+function renderTier(){const el=$('setTier');if(el)el.textContent=TIER}
+function logout(){try{localStorage.removeItem('cont_email')}catch(_){}
+  try{localStorage.removeItem('cont_tier')}catch(_){}
+  try{localStorage.removeItem('cont_capsule')}catch(_){}
+  location.reload()}
 // ---- tabs ----
 function tab(b){
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('on'));
@@ -290,9 +300,11 @@ function downloadCapsule(){
 }
 // ---- my capsule ----
 async function loadSaved(){
+  // show cached capsule instantly (offline-safe), then refresh from cloud
+  try{const c=localStorage.getItem('cont_capsule');if(c){$('savedOut').textContent=c;window.SAVED=c}}catch(_){}
   const d=await api({act:'load',email:EMAIL});
-  if(d.err){$('savedOut').textContent='No capsule saved yet — build one in the Build tab.';return}
-  if(d.capsule){$('savedOut').textContent=d.capsule;window.SAVED=d.capsule;TIER=d.tier||'Free';$('setTier').textContent=TIER}
+  if(d.err){if(!window.SAVED)$('savedOut').textContent='No capsule saved yet — build one in the Build tab.';return}
+  if(d.capsule){$('savedOut').textContent=d.capsule;window.SAVED=d.capsule;TIER=d.tier||'Free';$('setTier').textContent=TIER;try{localStorage.setItem('cont_capsule',d.capsule)}catch(_){}}
   else $('savedOut').textContent='No capsule saved yet — build one in the Build tab.';
 }
 function downloadSaved(){
@@ -375,8 +387,22 @@ async function submitInterview(){
 (async function(){
   const e=localStorage.getItem('cont_email');
   if(e){
-    const d=await api({act:'load',email:e});
-    if(!d.err){EMAIL=e;TIER=d.tier||'Free';enterApp();return}
+    // sticky login: straight into the app, always — session persists until manual logout
+    EMAIL=e;
+    try{TIER=localStorage.getItem('cont_tier')||'Free'}catch(_){}
+    enterApp();
+    // refresh capsule + tier in the background; a failure NEVER logs the user out
+    api({act:'load',email:e}).then(d=>{
+      if(!d.err){
+        TIER=d.tier||TIER;
+        try{localStorage.setItem('cont_tier',TIER)}catch(_){}
+        if(d.capsule){try{localStorage.setItem('cont_capsule',d.capsule)}catch(_){}
+          const ta=$('ta'); if(ta) ta.value=d.capsule;
+        }
+        renderTier();
+      }
+    });
+    return;
   }
   $('gate').style.display='flex';
 })();
