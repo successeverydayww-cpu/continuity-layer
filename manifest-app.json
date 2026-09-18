@@ -1,0 +1,16 @@
+{
+  "name": "Continuity Layer",
+  "short_name": "Continuity",
+  "description": "Never lose your AI companion — build, sign, and restore continuity capsules.",
+  "start_url": "/continuity-layer/app.html",
+  "scope": "/continuity-layer/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0C4A6E",
+  "icons": [
+    {"src": "/continuity-layer/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/continuity-layer/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "/continuity-layer/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

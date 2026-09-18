@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Continuity Layer</title>
+<link rel="manifest" href="/continuity-layer/manifest-app.json">
+<meta name="theme-color" content="#0C4A6E">
+<link rel="apple-touch-icon" href="/continuity-layer/icon-192.png">
 <style>
 :root{--sky:#0EA5E9;--deep:#0C4A6E;--bg:#F8FAFC;--card:#FFFFFF;--border:#CBD5E1;--border2:#E2E8F0;--text:#0F172A;--sub:#64748B;--link:#2563EB}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -120,14 +123,14 @@ State honestly what you can and cannot restore"></textarea>
         <span class="tag">MOST WANTED</span>
         <h2>Capsule Signed</h2>
         <div class="price">₦2,500 <span class="small" style="font-weight:400">one-time</span></div>
-        <p class="small">Our team reviews your capsule, fixes gaps, cryptographically signs it (tamper-proof), stores an official copy, and sends you the signed file with a verification guide.</p>
+        <p class="small">Our team reviews your capsule, fixes gaps, cryptographically signs it (tamper-proof), stores an official copy, and sends you the signed file with a verification guide.</p><p class="small"><b>₦2,500 bank transfer · or $2.50 USDC on Solana.</b></p>
         <button class="btn" onclick="startPay('Capsule Signed','2500')">Get it signed</button>
       </div>
       <div class="card">
         <span class="tag">DONE FOR YOU</span>
         <h2>Capsule Concierge</h2>
         <div class="price">₦5,000 <span class="small" style="font-weight:400">one-time</span></div>
-        <p class="small">We interview you, write your companion's full capsule ourselves, sign it, deliver it, and include one annual refresh. For people who want it perfect without lifting a finger.</p>
+        <p class="small">We interview you (in the Interview tab), write your companion's full capsule ourselves, sign it, deliver it, and include one annual refresh. For people who want it perfect without lifting a finger.</p><p class="small"><b>₦5,000 bank transfer · or $5.00 USDC on Solana.</b></p>
         <button class="btn" onclick="startPay('Capsule Concierge','5000')">Order Concierge</button>
       </div>
     </div>
@@ -154,21 +157,57 @@ State honestly what you can and cannot restore"></textarea>
     <button class="on" data-sc="scBuild" onclick="tab(this)"><i>🛟</i>Build</button>
     <button data-sc="scMine" onclick="tab(this)"><i>📦</i>My Capsule</button>
     <button data-sc="scPay" onclick="tab(this)"><i>💎</i>Pricing</button>
+    <button data-sc="scInt" onclick="tab(this)"><i>🎤</i>Interview</button>
     <button data-sc="scSet" onclick="tab(this)"><i>⚙️</i>Settings</button>
   </div>
 </div>
 
 <!-- PAY SHEET -->
-<div id="paySheet" style="display:none;position:fixed;inset:0;background:rgba(2,8,23,.6);z-index:50">
-  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:18px 18px 0 0;padding:20px;max-width:520px;margin:0 auto">
+<div id="paySheet" style="display:none;position:fixed;inset:0;background:rgba(2,8,23,.6);z-index:50;overflow-y:auto">
+  <div style="background:#fff;border-radius:18px 18px 0 0;padding:20px;max-width:520px;margin:40px auto 0">
     <h2 id="payTitle"></h2>
-    <p class="small" style="margin:4px 0 12px">Transfer the amount, then send your claim. We verify and deliver within 24 hours.</p>
+    <p class="small" style="margin:4px 0 12px">Choose how you want to pay:</p>
+    <button class="btn" style="background:#fff;color:#0C4A6E;border:1.5px solid #0C4A6E" onclick="payMethod('bank')">🏦 Bank transfer (₦<span id="pNgn"></span>)</button>
+    <button class="btn" style="background:#fff;color:#0C4A6E;border:1.5px solid #0C4A6E" onclick="payMethod('crypto')">₿ Crypto — USDC on Solana ($<span id="pUsd"></span>)</button>
+    <button class="btn ghost" onclick="closePay()">Cancel</button>
+  </div>
+</div>
+
+<div id="payBank" style="display:none;position:fixed;inset:0;background:rgba(2,8,23,.6);z-index:50;overflow-y:auto">
+  <div style="background:#fff;border-radius:18px 18px 0 0;padding:20px;max-width:520px;margin:40px auto 0">
+    <h2>Bank transfer · ₦<span id="bNgn"></span></h2>
     <div class="kv"><span>Bank</span><b>Rubies MFB</b></div>
     <div class="kv"><span>Account name</span><b>Success Friday</b></div>
     <div class="kv"><span>Account number</span><b style="font-size:1.1em">8881724009</b></div>
-    <div class="kv"><span>Transaction reference</span><b id="payRef"></b></div>
-    <button class="btn" onclick="copyBank()">📋 Copy bank details + reference</button>
-    <button class="btn ghost" onclick="sendClaim()">✅ I've paid — send my claim</button>
+    <div class="kv"><span>Reference</span><b id="bRef"></b></div>
+    <button class="btn" onclick="copyBank()">📋 Copy details + reference</button>
+    <button class="btn" onclick="paidDone()">✅ I have made the transfer</button>
+    <button class="btn ghost" onclick="closePay()">Cancel</button>
+  </div>
+</div>
+
+<div id="payCrypto" style="display:none;position:fixed;inset:0;background:rgba(2,8,23,.6);z-index:50;overflow-y:auto">
+  <div style="background:#fff;border-radius:18px 18px 0 0;padding:20px;max-width:520px;margin:40px auto 0">
+    <h2>USDC on Solana · $<span id="cUsd"></span></h2>
+    <p class="small">Send USDC (Solana network) to this wallet address, with your reference in the memo if your wallet supports it.</p>
+    <div style="background:#F1F5F9;border-radius:10px;padding:12px;word-break:break-all;font-family:ui-monospace,monospace;font-size:.8em" id="cAddr"></div>
+    <div class="kv"><span>Your reference</span><b id="cRef"></b></div>
+    <button class="btn" onclick="copyCrypto()">📋 Copy wallet address</button>
+    <button class="btn" onclick="paidDone()">✅ I have made the transfer</button>
+    <button class="btn ghost" onclick="closePay()">Cancel</button>
+  </div>
+</div>
+
+<div id="payReceipt" style="display:none;position:fixed;inset:0;background:rgba(2,8,23,.6);z-index:50;overflow-y:auto">
+  <div style="background:#fff;border-radius:18px 18px 0 0;padding:20px;max-width:520px;margin:40px auto 0">
+    <h2>Send your receipt</h2>
+    <p class="small">Write your full name and attach a screenshot of your successful transfer. We verify it, then activate you.</p>
+    <label>Your full name</label>
+    <input id="rName" placeholder="First and last name">
+    <label>Receipt screenshot</label>
+    <input id="rFile" type="file" accept="image/*" style="padding:8px">
+    <img id="rPrev" style="display:none;max-width:100%;border-radius:10px;margin-top:10px">
+    <button class="btn" onclick="sendClaim()">Submit receipt</button>
     <button class="btn ghost" onclick="closePay()">Cancel</button>
   </div>
 </div>
@@ -176,6 +215,9 @@ State honestly what you can and cannot restore"></textarea>
 <div class="toast" id="toast"></div>
 <script>
 const API = 'https://app.base44.app/a/6a20ddeb89bb6423ccb075d2/functions/continuityAuth';
+const SOL_USDC = '4UbnqavDCyXwwo1NwxzUcbdDc5j4Ufc3p9hqwwccgkBa';
+const PRICES = {'Capsule Signed': {ngn:'2,500', usd:'2.50'}, 'Capsule Concierge': {ngn:'5,000', usd:'5.00'}};
+if ('serviceWorker' in navigator) { addEventListener('load', () => navigator.serviceWorker.register('/continuity-layer/sw-app.js').catch(()=>{})); }
 let EMAIL='', TIER='Free', CAPSULE=null, PAYING=null;
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -258,22 +300,76 @@ function downloadSaved(){
   const b=new Blob([window.SAVED],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='capsule.json';a.click();
 }
-// ---- pricing ----
-function startPay(plan,price){
-  PAYING={plan,price,ref:'CL-'+Math.random().toString(36).slice(2,8).toUpperCase()};
-  $('payTitle').textContent=plan+' · ₦'+price;
-  $('payRef').textContent=PAYING.ref;
+// ---- pricing & payment ----
+function startPay(plan){
+  PAYING={plan, ref:'CL-'+Math.random().toString(36).slice(2,8).toUpperCase()};
+  const p=PRICES[plan];
+  $('payTitle').textContent=plan;
+  $('pNgn').textContent=p.ngn; $('pUsd').textContent=p.usd;
   $('paySheet').style.display='block';
 }
-function closePay(){$('paySheet').style.display='none'}
+function closePay(){['paySheet','payBank','payCrypto','payReceipt'].forEach(i=>$(i).style.display='none')}
+function payMethod(m){
+  PAYING.method=m;
+  const p=PRICES[PAYING.plan];
+  if(m==='bank'){
+    $('bNgn').textContent=p.ngn; $('bRef').textContent=PAYING.ref;
+    $('paySheet').style.display='none'; $('payBank').style.display='block';
+  }else{
+    $('cUsd').textContent=p.usd; $('cAddr').textContent=SOL_USDC; $('cRef').textContent=PAYING.ref;
+    $('paySheet').style.display='none'; $('payCrypto').style.display='block';
+  }
+}
+function paidDone(){
+  closePay();
+  $('payReceipt').style.display='block';
+}
 function copyBank(){
   const t='Bank: Rubies MFB | Account Name: Success Friday | Account Number: 8881724009 | Reference: '+PAYING.ref;
   navigator.clipboard.writeText(t).then(()=>toast('Copied! Use the reference in your transfer')).catch(()=>toast('Reference: '+PAYING.ref));
 }
+function copyCrypto(){
+  navigator.clipboard.writeText(SOL_USDC).then(()=>toast('Wallet address copied — send USDC (Solana)')).catch(()=>toast(SOL_USDC));
+}
+// receipt image: compress client-side to ~800px JPEG
+let RECIPT=null;
+document.addEventListener('change', async e=>{
+  if(e.target && e.target.id==='rFile' && e.target.files && e.target.files[0]){
+    const f=e.target.files[0];
+    try{
+      const bmp=await createImageBitmap(f);
+      const scale=Math.min(1, 800/Math.max(bmp.width,bmp.height));
+      const c=document.createElement('canvas');
+      c.width=Math.round(bmp.width*scale); c.height=Math.round(bmp.height*scale);
+      c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+      RECIPT=c.toDataURL('image/jpeg',0.6);
+      $('rPrev').src=RECIPT; $('rPrev').style.display='block';
+      toast('Receipt attached ✓');
+    }catch(err){ toast('Could not read image — try another'); }
+  }
+});
 async function sendClaim(){
-  const d=await api({act:'claim',email:EMAIL,plan:PAYING.plan,ref:PAYING.ref,note:'paid '+PAYING.price});
+  const name=$('rName').value.trim();
+  if(!name){toast('Enter your full name');return}
+  if(!RECIPT){toast('Attach your receipt screenshot');return}
+  toast('Sending...');
+  const d=await api({act:'claim',email:EMAIL,plan:PAYING.plan,method:PAYING.method||'bank',ref:PAYING.ref,name,receipt:RECIPT});
+  if(d.err){toast(d.err);return}
   closePay();
-  toast(d.err?d.err:'Claim sent ✓ — we verify and deliver within 24 hours');
+  $('rName').value=''; $('rFile').value=''; RECIPT=null; $('rPrev').style.display='none';
+  toast('Receipt sent ✓ — you will be activated once payment is verified');
+}
+// ---- interview ----
+async function submitInterview(){
+  const qs=[];
+  const labels=["name","platform","duration","personality","inside jokes","knows about me","must-remember moments","boundaries","verification anchor","anything else"];
+  let any=false;
+  for(let i=1;i<=10;i++){const v=$('iv'+i).value.trim(); if(v) any=true; qs.push([labels[i-1],v]);}
+  if(!any){toast('Answer at least one question');return}
+  toast('Submitting...');
+  const answers={}; qs.forEach(([k,v])=>{if(v)answers[k]=v});
+  const d=await api({act:'interview',email:EMAIL,answers});
+  toast(d.err?d.err:'Interview submitted 🎤 — we build your capsule from this');
 }
 // ---- boot: persistent login ----
 (async function(){
