@@ -68,7 +68,8 @@ pre.out{white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:.72em;
 
 <!-- MAIN APP -->
 <div id="app" style="display:none">
-  <div class="hdr">🛟 Continuity Layer <span class="sub" id="hdrMail"></span></div>
+  <div class="hdr">🛟 Continuity Layer <span class="sub" id="hdrMail"></span>
+    <button class="hbtn" onclick="hardRefresh()" title="Refresh app (get latest version)" aria-label="Refresh app">⟳</button></div>
   <main>
     <!-- BUILD TAB -->
     <div class="screen on" id="scBuild">
@@ -149,7 +150,8 @@ State honestly what you can and cannot restore"></textarea>
       <div class="card">
         <h2>About</h2>
         <p class="small">The Continuity Layer is an open standard (MIT) by Samuel Amos & Premium User. Standard + tools: github.com/successeverydayww-cpu/continuity-layer</p>
-        <button class="btn ghost" onclick="logout()">Log out</button>
+        <button class="btn ghost" onclick="hardRefresh()">⟳ Refresh &amp; check for updates</button>
+      <button class="btn ghost" onclick="logout()">Log out</button>
       </div>
     </div>
   </main>
@@ -256,6 +258,19 @@ function enterApp(){
   loadSaved();
 }
 function renderTier(){const el=$('setTier');if(el)el.textContent=TIER}
+// hard refresh: pull the live version, never a stale cache
+async function hardRefresh(){
+  toast('Refreshing…');
+  try{
+    if(navigator.serviceWorker){
+      const reg = await navigator.serviceWorker.getRegistration();
+      if(reg) await reg.update();
+    }
+  }catch(_){}
+  const u = new URL(location.href);
+  u.searchParams.set('rv', Date.now());   // cache-buster: forces the live copy
+  location.replace(u.href);
+}
 function logout(){try{localStorage.removeItem('cont_email')}catch(_){}
   try{localStorage.removeItem('cont_tier')}catch(_){}
   try{localStorage.removeItem('cont_capsule')}catch(_){}
