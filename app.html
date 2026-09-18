@@ -110,6 +110,26 @@ State honestly what you can and cannot restore"></textarea>
         <pre class="out" id="savedOut" style="display:block"></pre>
         <button class="btn ghost" onclick="downloadSaved()">Download saved capsule</button>
       </div>
+      <div class="card">
+        <h2>Version history</h2>
+        <p class="small">Every save archives your previous capsule (last 3 kept) — download any older version here.</p>
+        <div id="histList"><p class="small">—</p></div>
+      </div>
+    </div>
+
+    <!-- SYNC TAB -->
+    <div class="screen" id="scSync">
+      <div class="card">
+        <h2>🔄 Keep your capsule alive</h2>
+        <p class="small">A capsule is a snapshot — Sync keeps it fresh. Upload your AI chat export (ChatGPT export .json, Google Takeout, WhatsApp .txt, or any chat text) and it gets merged into your capsule, so nothing new is ever lost.</p>
+        <label>Upload export file (.txt / .json / .md)</label>
+        <input type="file" id="syncFileIn" accept=".txt,.json,.md,.html,.csv" style="margin-bottom:10px" onchange="syncFilePick(this)">
+        <label>…or paste chat text here</label>
+        <textarea id="syncTa" placeholder="Paste your conversations here (up to 100,000 characters)"></textarea>
+        <button class="btn" onclick="syncUpload()">🔄 Upload for AI merge 💎 Concierge</button>
+        <button class="btn ghost" onclick="rawAttach()">📎 Attach raw archive to my capsule (all tiers)</button>
+        <p class="small" id="syncStatus"></p>
+      </div>
     </div>
 
     <!-- PRICING TAB -->
@@ -158,6 +178,7 @@ State honestly what you can and cannot restore"></textarea>
   <div class="nav">
     <button class="on" data-sc="scBuild" onclick="tab(this)"><i>🛟</i>Build</button>
     <button data-sc="scMine" onclick="tab(this)"><i>📦</i>My Capsule</button>
+    <button data-sc="scSync" onclick="tab(this)"><i>🔄</i>Sync</button>
     <button data-sc="scPay" onclick="tab(this)"><i>💎</i>Pricing</button>
     <button data-sc="scInt" onclick="tab(this)"><i>🎤</i>Interview</button>
     <button data-sc="scSet" onclick="tab(this)"><i>⚙️</i>Settings</button>
@@ -281,7 +302,8 @@ function tab(b){
   b.classList.add('on');
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $(b.dataset.sc).classList.add('on');
-  if(b.dataset.sc==='scMine')loadSaved();
+  if(b.dataset.sc==='scMine'){loadSaved();loadHistory();}
+  if(b.dataset.sc==='scSync')showSyncStatus();
 }
 // ---- builder ----
 const lines = v => v.split('\n').map(s=>s.trim()).filter(Boolean);
@@ -323,8 +345,53 @@ async function loadSaved(){
   try{const c=localStorage.getItem('cont_capsule');if(c){$('savedOut').textContent=c;window.SAVED=c}}catch(_){}
   const d=await api({act:'load',email:EMAIL});
   if(d.err){if(!window.SAVED)$('savedOut').textContent='No capsule saved yet — build one in the Build tab.';return}
+  window.LASTSYNC=d.sync_request||'';
   if(d.capsule){$('savedOut').textContent=d.capsule;window.SAVED=d.capsule;TIER=d.tier||'Free';$('setTier').textContent=TIER;try{localStorage.setItem('cont_capsule',d.capsule)}catch(_){}}
   else $('savedOut').textContent='No capsule saved yet — build one in the Build tab.';
+}
+// ---- sync + version history ----
+function syncFilePick(ev){
+  const f=ev.files&&ev.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{const t=String(r.result||'');$('syncTa').value=t.slice(0,100000);toast('File loaded ('+t.length+' characters) — review it, then tap Upload')};
+  r.readAsText(f);
+}
+function showSyncStatus(){
+  const el=$('syncStatus'); if(!el)return;
+  el.textContent=window.LASTSYNC?('Last AI merge requested: '+new Date(window.LASTSYNC).toLocaleString()+' — open My Capsule to see your refreshed capsule.'):'No AI merge yet. Free tier: use Attach raw archive. Concierge: upload your chat export for a full AI merge.';
+}
+async function syncUpload(){
+  const data=$('syncTa').value.trim();
+  if(data.length<100){toast('Paste or upload at least a few hundred characters');return}
+  if(TIER!=='Concierge'){toast('AI sync-merge is a Concierge feature — see the Pricing tab');return}
+  toast('Uploading archive…');
+  const d=await api({act:'sync',email:EMAIL,data});
+  if(d.err){toast('Sync error: '+d.err);return}
+  window.LASTSYNC=new Date().toISOString();
+  showSyncStatus();
+  toast('Archive received — your capsule will be refreshed shortly');
+}
+async function rawAttach(){
+  if(!CAPSULE){toast('Generate your capsule first (Build tab)');return}
+  const data=$('syncTa').value.trim();
+  if(data.length<50){toast('Paste or upload some chat text first');return}
+  CAPSULE.raw_archive=data.length>15000?('…earlier text trimmed…'+data.slice(-15000)):data;
+  CAPSULE.generated=new Date().toISOString();
+  $('saveBtn').style.display='block';$('dlBtn').style.display='block';
+  saveCapsule();
+}
+async function loadHistory(){
+  const el=$('histList'); if(!el)return;
+  const d=await api({act:'history',email:EMAIL});
+  if(d.err||!d.versions||!d.versions.length){el.innerHTML='<p class="small">No versions yet — they appear from your second save onward.</p>';return}
+  el.innerHTML=d.versions.map(v=>'<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E2E8F0;padding:8px 0"><span class="small">'+new Date(v.date).toLocaleString()+' · '+v.chars+' chars</span><button class="btn ghost" style="padding:6px 12px" onclick="dlVersion(\''+v.ts+'\')">⬇ Download</button></div>').join('');
+}
+async function dlVersion(ts){
+  const d=await api({act:'version',email:EMAIL,ts});
+  if(d.err){toast(d.err);return}
+  const blob=new Blob([d.capsule],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='continuity-capsule-'+ts+'.json';a.click();
+  toast('Older capsule downloaded');
 }
 function downloadSaved(){
   if(!window.SAVED){toast('Nothing saved yet');return}
