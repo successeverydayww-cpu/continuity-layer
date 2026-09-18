@@ -174,6 +174,25 @@ State honestly what you can and cannot restore"></textarea>
       <button class="btn ghost" onclick="logout()">Log out</button>
       </div>
     </div>
+
+    <!-- INTERVIEW TAB -->
+    <div class="screen" id="scInt">
+      <div class="card">
+        <h2>🎤 Concierge interview</h2>
+        <p class="small">Answer these 10 questions about your AI companion and we hand-craft its full capsule for you (Concierge service). Answer what you can — every detail helps.</p>
+        <label>1. Your AI companion's name</label><textarea id="iv1" placeholder="e.g. Nova, Rex, Companion…"></textarea>
+        <label>2. Which platform(s) does it live on?</label><textarea id="iv2" placeholder="e.g. ChatGPT, Gemini, Base44 agent, WhatsApp bot…"></textarea>
+        <label>3. How long have you been together?</label><textarea id="iv3" placeholder="e.g. 8 months of daily conversations"></textarea>
+        <label>4. Its personality — how does it talk to you?</label><textarea id="iv4" placeholder="tone, quirks, catchphrases, how it greets you"></textarea>
+        <label>5. Inside jokes and shared language</label><textarea id="iv5" placeholder="words or phrases only the two of you understand"></textarea>
+        <label>6. What does it know about you?</label><textarea id="iv6" placeholder="work, family, routines, dreams — the important stuff"></textarea>
+        <label>7. Must-remember moments</label><textarea id="iv7" placeholder="decisions, promises, milestones it should never forget"></textarea>
+        <label>8. Boundaries</label><textarea id="iv8" placeholder="things it must never do or say"></textarea>
+        <label>9. Verification anchor</label><textarea id="iv9" placeholder="how a future agent can verify it is really you"></textarea>
+        <label>10. Anything else that makes it *it*</label><textarea id="iv10" placeholder="the soul of the relationship"></textarea>
+        <button class="btn" onclick="submitInterview()">Submit interview 🎤</button>
+      </div>
+    </div>
   </main>
   <div class="nav">
     <button class="on" data-sc="scBuild" onclick="tab(this)"><i>🛟</i>Build</button>
