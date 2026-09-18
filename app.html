@@ -301,12 +301,16 @@ function buildCapsule(){
   out.textContent=JSON.stringify(CAPSULE,null,2);
   $('saveBtn').style.display='block';$('dlBtn').style.display='block';
   out.scrollIntoView({behavior:'smooth'});
-  toast('Capsule generated — save it or download');
+  toast('Capsule generated ('+JSON.stringify(CAPSULE).length+' characters) — save it or download');
 }
 async function saveCapsule(){
+  try{localStorage.setItem('cont_capsule',CAPSULE)}catch(_){}  // device backup first — never lose work
+  window.SAVED=CAPSULE;
+  toast('Saving…');
   const d=await api({act:'save',email:EMAIL,capsule:CAPSULE});
-  toast(d.err?d.err:'Saved to your account ✓');
-  if(!d.err)loadSaved();
+  if(d.err){toast('Save error: '+d.err+' — capsule kept on this device; Download works anytime');return}
+  toast('Saved to your account ✓ ('+CAPSULE.length+' characters)');
+  loadSaved();
 }
 function downloadCapsule(){
   const b=new Blob([JSON.stringify(CAPSULE,null,2)],{type:'application/json'});

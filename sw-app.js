@@ -1,4 +1,4 @@
-const CACHE = 'continuity-app-v3';
+const CACHE = 'continuity-app-v4';
 const ASSETS = [
   '/continuity-layer/app.html',
   '/continuity-layer/manifest-app.json',
