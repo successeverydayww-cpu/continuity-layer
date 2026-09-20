@@ -130,6 +130,12 @@ State honestly what you can and cannot restore"></textarea>
         <button class="btn ghost" onclick="rawAttach()">📎 Attach raw archive to my capsule (all tiers)</button>
         <p class="small" id="syncStatus"></p>
       </div>
+      <div class="card">
+        <h2>🔑 App sync key</h2>
+        <p class="small">Connect other platforms (like Skylar Forge) to your Continuity account. Your AI relationship — memory, work history and app data — syncs here automatically, and your beacon stays portable: take it out anytime, restore it anywhere.</p>
+        <button class="btn" onclick="genAppKey()">🔑 Generate / show my app sync key</button>
+        <p class="small" id="appKeyOut" style="word-break:break-all"></p>
+      </div>
     </div>
 
     <!-- PRICING TAB -->
@@ -378,6 +384,12 @@ function syncFilePick(ev){
 function showSyncStatus(){
   const el=$('syncStatus'); if(!el)return;
   el.textContent=window.LASTSYNC?('Last AI merge requested: '+new Date(window.LASTSYNC).toLocaleString()+' — open My Capsule to see your refreshed capsule.'):'No AI merge yet. Free tier: use Attach raw archive. Concierge: upload your chat export for a full AI merge.';
+}
+async function genAppKey(){
+  const d=await api({act:'appkey',email:EMAIL});
+  if(d.err){toast('Key error: '+d.err);return}
+  $('appKeyOut').innerHTML='<b>Your app sync key:</b><br><code style="user-select:all">'+d.key+'</code><br><span class="small">Copy this into the Connections tab of your Skylar Forge workspace (Settings &gt; Connections &gt; Continuity Layer). Treat it like a password — anyone holding it can write to your Continuity sync.</span>';
+  toast('App sync key ready');
 }
 async function syncUpload(){
   const data=$('syncTa').value.trim();
