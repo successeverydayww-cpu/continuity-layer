@@ -265,7 +265,22 @@ State honestly what you can and cannot restore"></textarea>
 const API = 'https://continuity-layer-api.successeverydayww-cpu.workers.dev';
 const SOL_USDC = '4UbnqavDCyXwwo1NwxzUcbdDc5j4Ufc3p9hqwwccgkBa';
 const PRICES = {'Capsule Signed': {ngn:'2,500', usd:'2.50'}, 'Capsule Concierge': {ngn:'5,000', usd:'5.00'}};
-if ('serviceWorker' in navigator) { addEventListener('load', () => navigator.serviceWorker.register('/continuity-layer/sw-app.js').catch(()=>{})); }
+/* silent auto-update (v7): new version installs on open, page refreshes itself once — no manual action  */
+try{
+  if('serviceWorker' in navigator && location.protocol==='https:'){
+    var HAD_CTL = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('/continuity-layer/sw-app.js?v=7').then(function(reg){
+      try{ reg.update().catch(function(){}); }catch(e){}
+      setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000);
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if(!HAD_CTL) return;
+        try{ if(sessionStorage.getItem('sf_swreloaded')==='1') return; sessionStorage.setItem('sf_swreloaded','1'); }catch(e){}
+        setTimeout(function(){ location.reload(); }, 600);
+      });
+    }).catch(function(){});
+    setTimeout(function(){ try{ sessionStorage.removeItem('sf_swreloaded'); }catch(e){} }, 20000);
+  }
+}catch(e){}
 let EMAIL='', TIER='Free', CAPSULE=null, PAYING=null;
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
